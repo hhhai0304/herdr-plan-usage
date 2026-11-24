@@ -1,0 +1,60 @@
+# Every agent's usage meters in the herdr tab bar.
+#
+# Copy this file to the plugin's config directory and edit what you need:
+#
+#   herdr plugin config-dir hhhai0304.plan-usage
+#
+# The setup pane (prefix+u, then the `setup` action) writes the same keys, so this
+# file is a reference — the plugin also runs with no config at all.
+
+# ── global ───────────────────────────────────────────────────────────
+lang = "en"                 # the UI is English; kept for future translations
+icons = "text"              # text = labels only · nerd = a Nerd Font glyph before each label
+separator = " · "           # between two providers in the tab bar
+stale_after = 900           # seconds before a reading is marked with `~`
+focus = "all"               # all · agent-first (focused pane's agent first) · agent-only
+bar_errors = false          # true = a provider with no reading shows `⚠` in the tab bar
+# order = ["codex", "deepseek", "openrouter"]   # default: registry order
+
+# ── per agent ────────────────────────────────────────────────────────
+# enabled  true/false, or absent = show it once a login is detected
+# bar      false = keep it out of the tab bar, still visible in the popup
+# label    the tab bar label (defaults: GPT, OC, OR, DS, AGY, Claude)
+# windows  which meters to show, by kind (`session`, `weekly`, `monthly`, `credits`,
+#          `balance`, `spend`), by label, or by model name; absent = all of them
+
+[codex]
+label = "GPT"
+# windows = ["session", "weekly"]
+
+[opencode]
+# The Go subscription lapsed on this account; the popup explains it, the bar stays clean.
+enabled = false
+
+[openrouter]
+label = "OR"
+
+[deepseek]
+label = "DS"
+
+[antigravity]
+label = "AGY"
+
+# A second Claude Code login: point at another CLAUDE_CONFIG_DIR.
+# [claude]
+# label = "I"
+# dirs = ["~/.claude", "~/.claude-acc2"]
+
+# ── any other agent: one command, one JSON object ────────────────────
+# The command's stdout must be:
+#
+#   {"plan": "Custom", "account": "me@example.com",
+#    "windows": [{"kind": "weekly", "used": 42, "resets_at": "2026-12-01T00:00:00Z"}]}
+#
+# kind is one of session, daily, weekly, monthly, credits, spend, balance.
+# `amount` replaces `used` for a money meter: {"kind": "balance", "amount": "$6.43"}.
+#
+# [custom.together]
+# name = "Together"
+# label = "TG"
+# command = "curl -sH 'Authorization: Bearer $TOGETHER_KEY' https://api.together.xyz/v1/usage | jq -c '{windows: [{kind: \"monthly\", used: .percent}]}'"
