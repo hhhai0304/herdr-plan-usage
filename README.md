@@ -175,7 +175,7 @@ Read-only, by design:
 ## Development
 
 ```bash
-python -m unittest discover -s tests -t . -v      # 50 tests, no network, no credentials
+python -m unittest discover -s tests -t . -v      # 52 tests, no network, no credentials
 python plan_usage.py bar --demo                    # sample line
 python plan_usage.py panel --demo                   # sample popup (q closes)
 herdr plugin link .                                 # develop against this checkout
