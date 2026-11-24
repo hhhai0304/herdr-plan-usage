@@ -43,6 +43,10 @@ herdr plugin install hhhai0304/herdr-plan-usage
 herdr plugin action invoke hhhai0304.plan-usage.setup   # prints the config snippet, `c` copies it
 ```
 
+Requires Python 3.9+ reachable as `python` (what the manifest calls) — a POSIX host
+that only ships `python3` needs a `python` symlink on PATH. Nothing else: no build
+step, no dependencies, stdlib only.
+
 Paste the snippet into `~/.config/herdr/config.toml`. If that file already has a
 `[ui]` table, move the keys into it — TOML does not allow a second `[ui]` — and if
 `tab_bar_right` already lists something, add the entry to the array instead of
