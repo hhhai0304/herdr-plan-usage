@@ -263,7 +263,7 @@ def panel_lines(providers, data, now, mode, busy, screen_width, settings, demo=F
     fetched = [data[p.id]["fetched_at"] for p in providers if (data.get(p.id) or {}).get("fetched_at")]
     status = ("refreshing\u2026" if busy
               else f"updated {fmt_ago(min(fetched), now)}" if fetched else "")
-    hint = "Tab view \u00b7 r refresh \u00b7 q close"
+    hint = "Tab view \u00b7 s setup \u00b7 r refresh \u00b7 q close"
     lines.append("  " + fg("dim", " \u00b7 ".join(x for x in (status, hint) if x)))
     return lines
 
@@ -298,5 +298,6 @@ def setup_lines(rows, cursor, note, screen_width):
         lines.append("  " + head + " " * gap + fg(colour, clipped))
     lines += ["", "  " + fg("green", note) if note else "",
               "  " + fg("dim", cut("\u2191\u2193 move \u00b7 space show/hide \u00b7 b tab bar \u00b7 l label "
-                                  "\u00b7 r refresh \u00b7 c snippet \u00b7 q close", screen_width - 2))]
+                                  "\u00b7 r refresh \u00b7 c snippet \u00b7 s back \u00b7 q close",
+                                  screen_width - 2))]
     return lines

@@ -113,7 +113,7 @@ def size():
 # ── popup ────────────────────────────────────────────────────────────
 
 def panel(settings, providers, demo=False):
-    ui = {"mode": "detail"}
+    ui = {"mode": "detail", "screen": "usage", "cursor": 0, "note": ""}
     refresher = Refresher(providers, settings)
     with Screen() as screen:
         if not demo:
@@ -125,12 +125,25 @@ def panel(settings, providers, demo=False):
                 refresher.kick(cache.PANEL_MAX_AGE)
                 last = now
             data = cache.demo(providers) if demo else cache.load()
-            screen.draw(render.panel_lines(providers, data, now, ui["mode"],
-                                           refresher.busy, size(), settings, demo))
+            if ui["screen"] == "setup":
+                rows = rows_of(providers, settings, data, demo)
+                ui["cursor"] = max(0, min(ui["cursor"], len(rows) - 1))
+                screen.draw(render.setup_lines(rows, ui["cursor"], ui["note"], size()))
+            else:
+                screen.draw(render.panel_lines(providers, data, now, ui["mode"],
+                                               refresher.busy, size(), settings, demo))
+            ui["note"] = ""
             key = screen.key(0.5)
             if key in QUIT:
                 break
-            if key in (b"r", b"R"):
+            if ui["screen"] == "setup":
+                rows = rows_of(providers, settings, cache.demo(providers) if demo else cache.load(), demo)
+                ui["cursor"], ui["note"] = setup_key(key, rows, ui["cursor"], settings, refresher, screen)
+                if key in (b"s", b"S"):
+                    ui["screen"], ui["cursor"] = "usage", 0
+            elif key in (b"s", b"S"):
+                ui["screen"], ui["cursor"], ui["note"] = "setup", 0, ""
+            elif key in (b"r", b"R"):
                 refresher.kick(cache.MANUAL_MIN_AGE)
                 last = time.time()
             elif key in (b"\t", b"\x1b[Z", b"\x1b[C", b"\x1b[D"):
@@ -138,6 +151,36 @@ def panel(settings, providers, demo=False):
 
 
 # ── setup ────────────────────────────────────────────────────────────
+
+def setup_key(key, rows, cursor, settings, refresher, screen):
+    """One key on the settings screen. Returns (cursor, note); the caller decides
+    whether `s` leaves for the usage screen."""
+    if key in UP:
+        return cursor - 1, ""
+    if key in DOWN:
+        return cursor + 1, ""
+    if not rows:
+        return cursor, ""
+    row = rows[cursor]
+    if key == b" ":
+        settings.set_provider(row["id"], enabled=not row["enabled"])
+        settings.save()
+        if not row["enabled"]:  # just switched on: it may never have been fetched
+            refresher.kick(cache.MANUAL_MIN_AGE)
+    elif key in (b"b", b"B"):
+        settings.set_provider(row["id"], bar=not row["bar"])
+        settings.save()
+    elif key in (b"l", b"L"):
+        typed = edit_label(screen, row["label"])
+        if typed is not None:
+            settings.set_provider(row["id"], label=typed or None)
+            settings.save()
+    elif key in (b"r", b"R"):
+        refresher.kick(cache.MANUAL_MIN_AGE)
+    elif key in (b"c", b"C"):
+        return cursor, "Copied." if copy(snippet()) else "No clipboard tool found."
+    return cursor, ""
+
 
 def rows_of(providers, settings, data, demo=False):
     rows = []
@@ -234,36 +277,14 @@ def setup(settings, providers, demo=False):
             if not demo and now - last >= cache.PANEL_MAX_AGE:
                 refresher.kick(cache.PANEL_MAX_AGE)
                 last = now
-            rows = rows_of(providers, settings, cache.load(), demo)
+            rows = rows_of(providers, settings, cache.demo(providers) if demo else cache.load(), demo)
             cursor = max(0, min(cursor, len(rows) - 1))
             screen.draw(render.setup_lines(rows, cursor, note, size()))
             note = ""
             key = screen.key(0.5)
             if key in QUIT:
                 break
-            if key in UP:
-                cursor -= 1
-            elif key in DOWN:
-                cursor += 1
-            elif key == b" " and rows:
-                row = rows[cursor]
-                settings.set_provider(row["id"], enabled="false" if row["enabled"] else "true")
-                settings.save()
-            elif key in (b"b", b"B") and rows:
-                row = rows[cursor]
-                settings.set_provider(row["id"], bar="false" if row["bar"] else "true")
-                settings.save()
-            elif key in (b"l", b"L") and rows:
-                row = rows[cursor]
-                typed = edit_label(screen, row["label"])
-                if typed is not None:
-                    settings.set_provider(row["id"], label=typed or None)
-                    settings.save()
-            elif key in (b"r", b"R"):
-                refresher.kick(cache.MANUAL_MIN_AGE)
-                last = time.time()
-            elif key in (b"c", b"C"):
-                note = "Copied." if copy(snippet()) else "No clipboard tool found."
+            cursor, note = setup_key(key, rows, cursor, settings, refresher, screen)
 
 
 # ── tab bar shim ─────────────────────────────────────────────────────
