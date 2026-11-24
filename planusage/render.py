@@ -292,7 +292,7 @@ def setup_lines(rows, cursor, note, screen_width):
         gap = max(1, screen_width - 2 - width(plain) - width(clipped) - 2)
         lines.append("  " + head + " " * gap + fg(colour, clipped))
     lines += ["", "  " + fg("green", note) if note else "",
-              "  " + fg("dim", cut("\u2191\u2193 move \u00b7 space show/hide \u00b7 b tab bar \u00b7 l label "
-                                  "\u00b7 r refresh \u00b7 c snippet \u00b7 s back \u00b7 q close",
+              "  " + fg("dim", cut("\u2191\u2193 move \u00b7 space show/hide \u00b7 b bar \u00b7 l label \u00b7 r refresh "
+                                  "\u00b7 c snippet \u00b7 s back \u00b7 q close",
                                   screen_width - 2))]
     return lines
