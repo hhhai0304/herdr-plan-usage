@@ -423,6 +423,18 @@ class RenderTest(TempEnv):
             plain = [render.ANSI.sub("", line) for line in lines]
             self.assertLessEqual(max(len(line) for line in plain), width + 1)
 
+    def test_setup_marks_a_ready_but_switched_off_agent(self):
+        settings = config.load()
+        settings.set_provider("codex", enabled=False)
+        rows = ui.rows_of(self.providers(), settings, self.states(time.time()))
+        lines = [render.ANSI.sub("", line) for line in render.setup_lines(rows, 0, "", 92)]
+        codex = next(line for line in lines if "Codex" in line)
+        self.assertIn("[ ]", codex)
+        self.assertIn("hidden", codex)
+        self.assertNotIn("bar on", codex)
+        deep = next(line for line in lines if "DeepSeek" in line)
+        self.assertIn("label \"DS\"", deep)
+
 
 # ── registry + credentials ───────────────────────────────────────────
 

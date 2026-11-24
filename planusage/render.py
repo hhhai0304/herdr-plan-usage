@@ -279,11 +279,14 @@ def setup_lines(rows, cursor, note, screen_width):
         name = pad(item["name"][:12], 12)
         plan = pad((item["plan"] or "\u2013")[:10], 10)
         state = item["state"]
-        if state == "ready":
-            tail, colour = f'label "{item["label"]}" \u00b7 bar {"on" if item["bar"] else "off"}', "dim"
-        else:
+        if state != "ready":
             tail = item.get("problem") or STATE_TEXT.get(state, state)
             colour = "red" if state in ("expired", "unentitled", "unsupported", "nologin") else "dim"
+        elif not item["enabled"]:
+            # ready but switched off: say so, otherwise the row looks like it is showing
+            tail, colour = f'hidden \u00b7 label "{item["label"]}"', "dim"
+        else:
+            tail, colour = f'label "{item["label"]}" \u00b7 bar {"on" if item["bar"] else "off"}', "dim"
         plain = f" {pointer} [{mark}] {name} {plan}"
         head = (fg("fg" if index == cursor else "dim", f" {pointer} ")
                 + fg("fg", f"[{mark}]") + " " + fg(item["color"], name) + " " + fg("dim", plan))
