@@ -279,8 +279,10 @@ def setup_lines(rows, cursor, note, screen_width):
         name = pad(item["name"][:12], 12)
         plan = pad((item["plan"] or "\u2013")[:10], 10)
         state = item["state"]
+        hidden = "hidden \u00b7 " if not item["enabled"] else ""
         if state != "ready":
-            tail = item.get("problem") or STATE_TEXT.get(state, state)
+            reason = item.get("problem") or STATE_TEXT.get(state, state)
+            tail = hidden + reason
             colour = "red" if state in ("expired", "unentitled", "unsupported", "nologin") else "dim"
         elif not item["enabled"]:
             # ready but switched off: say so, otherwise the row looks like it is showing
