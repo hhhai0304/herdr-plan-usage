@@ -80,7 +80,7 @@ until you enable it in setup.
 | **OpenCode Go** | pi's `opencode-go` key | `opencode.ai/inference/go/v1/usage` |
 | **OpenRouter** | pi's `openrouter` login, `$OPENROUTER_API_KEY` | `openrouter.ai/api/v1/key` |
 | **DeepSeek** | pi's `deepseek` key, `$DEEPSEEK_API_KEY` | `api.deepseek.com/user/balance` |
-| **Antigravity** | `agy`'s own token (`~/.gemini/antigravity-cli/`) | Cloud Code `retrieveUserQuotaSummary` |
+| **Antigravity** | `agy`'s own token (`~/.gemini/antigravity-cli/`) | Cloud Code `retrieveUserQuotaSummary` — one row per quota group, named the way Google names it (`Gemini`, `Claude`, or the free tier's combined `Claude and GPT`) |
 | **anything else** | a `[custom.<name>]` command you write | that command's JSON output |
 
 pi is the important one here: it holds OAuth logins for Codex and OpenRouter and
@@ -180,6 +180,7 @@ Read-only, by design:
 python -m unittest discover -s tests -t . -v      # 52 tests, no network, no credentials
 python plan_usage.py bar --demo                    # sample line
 python plan_usage.py panel --demo                   # sample popup (q closes)
+python plan_usage.py probe antigravity             # one provider's normalized answer, no cache write
 herdr plugin link .                                 # develop against this checkout
 ```
 

@@ -203,6 +203,52 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(wins[0]["label"], "Daily credits")
         self.assertEqual(wins[0]["used"], 50.0)
 
+    def test_antigravity_keeps_one_row_per_group(self):
+        # A work seat reports one group per model family; both must survive parsing.
+        doc = {"groups": [
+            {"displayName": "Gemini models", "buckets": [
+                {"bucketId": "gemini-weekly", "displayName": "Weekly Limit Remaining",
+                 "window": "weekly", "remainingFraction": 0.9, "resetTime": "2026-12-01T00:00:00Z"}]},
+            {"displayName": "Claude models", "buckets": [
+                {"bucketId": "3p-weekly", "displayName": "Weekly Limit Remaining",
+                 "window": "weekly", "remainingFraction": 0.4, "resetTime": "2026-12-01T00:00:00Z"}]},
+        ]}
+        wins = parse_antigravity_quota(doc)
+        self.assertEqual([w["model"] for w in wins], ["Gemini", "Claude"])
+        self.assertEqual([round(w["used"]) for w in wins], [10, 60])
+        self.assertEqual([w["kind"] for w in wins], ["weekly", "weekly"])
+
+    def test_antigravity_several_buckets_in_one_group(self):
+        doc = {"groups": [{"displayName": "Claude", "buckets": [
+            {"bucketId": "3p-session", "window": "5h", "remainingFraction": 0.5},
+            {"bucketId": "3p-weekly", "window": "weekly", "remainingFraction": 0.25}]}]}
+        wins = parse_antigravity_quota(doc)
+        self.assertEqual([w["kind"] for w in wins], ["session", "weekly"])
+        self.assertEqual([round(w["used"]) for w in wins], [50, 75])
+
+    def test_antigravity_group_name_fallbacks(self):
+        # No displayName: modelFamily, then the bucket id, keep the group identifiable.
+        wins = parse_antigravity_quota({"groups": [
+            {"modelFamily": "MODEL_FAMILY_CLAUDE", "buckets": [
+                {"bucketId": "3p-weekly", "window": "weekly", "remainingFraction": 0.5}]},
+            {"buckets": [{"bucketId": "3p-weekly", "window": "weekly", "remainingFraction": 0.5}]},
+        ]})
+        self.assertEqual(wins[0]["model"], "Claude")
+        self.assertEqual(wins[1]["model"], "Third-party")
+
+    def test_antigravity_amount_only_bucket(self):
+        wins = parse_antigravity_quota({"groups": [{"displayName": "Gemini", "buckets": [
+            {"bucketId": "gemini-daily", "displayName": "Requests left", "window": "daily",
+             "remainingAmount": "1200", "resetTime": "2026-12-01T00:00:00Z"}]}]})
+        self.assertEqual(wins[0]["kind"], "custom")
+        self.assertEqual(wins[0]["amount"], "1200")
+        self.assertIsNone(wins[0]["used"])
+        self.assertEqual(wins[0]["model"], "Gemini")
+
+    def test_antigravity_bucket_without_a_reading_is_skipped(self):
+        self.assertEqual(parse_antigravity_quota({"groups": [{"displayName": "X", "buckets": [
+            {"bucketId": "x-weekly", "window": "weekly"}]}]}), [])
+
 
 # ── config ───────────────────────────────────────────────────────────
 
@@ -392,6 +438,18 @@ class RenderTest(TempEnv):
             self.assertTrue(any("Codex" in line for line in plain))
             self.assertTrue(any("No active subscription" in line for line in plain))
             self.assertLessEqual(max(len(line) for line in plain), width + 2)
+
+    def test_panel_truncates_a_long_group_name(self):
+        provider = Provider("antigravity", "Antigravity", "AGY", "antigravity", "?",
+                            lambda: {}, lambda: ("login", "x"), "")
+        now = 1_000_000
+        data = {"antigravity": {"plan": "Free", "fetched_at": now, "error": None, "windows": [
+            window("weekly", used=40, resets_at=now + 3600,
+                   model="Claude Sonnet, Opus, GPT-OSS and a very long family name")]}}
+        lines = render.panel_lines([provider], data, now, False, 76, config.load())
+        widest = max(render.width(line) for line in lines)
+        self.assertLessEqual(widest, 78)
+        self.assertTrue(any("\u2026" in render.ANSI.sub("", line) for line in lines))
 
     def test_panel_always_shows_every_window(self):
         now = 1_000_000

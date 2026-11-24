@@ -190,14 +190,14 @@ def bar_text(providers, data, now, settings, demo=False):
 def window_row(w, now, screen_width, label_width=16):
     used = w["used"] if isinstance(w.get("used"), (int, float)) else None
     size = max(6, screen_width - 34 - label_width)
+    name = pad(cut(label_of(w), label_width), label_width)
     if used is None:
-        return ("    " + fg("dim", pad(label_of(w), label_width)) + " "
-                + fg("fg", w.get("amount") or ""))
+        return "    " + fg("dim", name) + " " + fg("fg", w.get("amount") or "")
     filled = max(1 if used > 0 else 0, round(size * min(100, used) / 100))
     track = fg(sev(used), "\u2501" * filled) + fg("track", "\u2501" * (size - filled))
     reset = (f"{fmt_left(w['resets_at'], now)} \u00b7 {fmt_clock(w['resets_at'], now)}"
              if w.get("resets_at") else w.get("amount") or "")
-    return ("    " + fg("dim", pad(label_of(w), label_width)) + " " + track + " "
+    return ("    " + fg("dim", name) + " " + track + " "
             + fg("fg", f"{round(used):>3}%") + "  " + fg("dim", reset))
 
 

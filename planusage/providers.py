@@ -171,24 +171,53 @@ def parse_deepseek(doc):
     return []
 
 
+def family_of(group, bucket):
+    """The name of one quota group.
+
+    Google answers `groups[]` and every group carries its own limit; a work account
+    typically has one group per model family (Gemini, Claude) while the free tier has
+    a single combined "Claude and GPT models" group. The human `displayName` wins;
+    `modelFamily` and the bucket id are fallbacks for a response that omits it, so a
+    group never ends up unnamed.
+    """
+    name = re.sub(r"\s+models?$", "", str(group.get("displayName") or "").strip(), flags=re.I)
+    if name:
+        return name
+    family = re.sub(r"^model[ _]family[ _]?", "", str(group.get("modelFamily") or "").strip(), flags=re.I)
+    if family and family.lower() not in ("unspecified", "unknown"):
+        return family.replace("_", " ").strip().title()
+    bucket_id = re.sub(r"-(weekly|daily|monthly|session|hourly|5h)$", "",
+                       str(bucket.get("bucketId") or "").strip(), flags=re.I)
+    short = {"3p": "Third-party"}
+    return short.get(bucket_id.lower(), bucket_id.replace("-", " ").title()) or None
+
+
 def parse_antigravity_quota(doc):
     wins = []
     for group in doc.get("groups") or []:
-        group_name = re.sub(r"\s+models$", "", (group.get("displayName") or "").strip())
         for bucket in group.get("buckets") or []:
+            model = family_of(group, bucket)
+            resets_at = to_epoch(bucket.get("resetTime"))
             fraction = bucket.get("remainingFraction")
-            if not isinstance(fraction, (int, float)):
-                continue
             mapped = {"weekly": "weekly", "daily": "daily", "session": "session",
                       "5h": "session", "monthly": "monthly"}.get(str(bucket.get("window") or "").lower())
-            model = group_name if group_name else None
-            if mapped:
-                wins.append(window(mapped, used=round((1 - fraction) * 100, 1), model=model,
-                                   resets_at=to_epoch(bucket.get("resetTime"))))
-            else:
-                wins.append(window("custom", used=round((1 - fraction) * 100, 1), model=model,
-                                   label=bucket.get("displayName") or "Quota",
-                                   resets_at=to_epoch(bucket.get("resetTime"))))
+            if isinstance(fraction, (int, float)):
+                if mapped:
+                    wins.append(window(mapped, used=round((1 - fraction) * 100, 1), model=model,
+                                       resets_at=resets_at))
+                else:
+                    wins.append(window("custom", used=round((1 - fraction) * 100, 1), model=model,
+                                       label=bucket.get("displayName") or "Quota",
+                                       resets_at=resets_at))
+                continue
+            # Some seats report what is left instead of a fraction; without a cap there
+            # is no percentage to draw, so the amount is the whole reading.
+            amount = bucket.get("remainingAmount")
+            if isinstance(amount, (dict, list)) or amount in (None, ""):
+                continue
+            wins.append(window("custom", model=model,
+                               label=bucket.get("displayName") or "Left",
+                               amount=str(amount), resets_at=resets_at))
     return wins
 
 

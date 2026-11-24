@@ -5,6 +5,7 @@
   plan_usage.py panel      the popup: s settings · r refresh · q close
   plan_usage.py setup      toggle agents, edit labels, check what was detected
   plan_usage.py detect     what is on this machine right now (text or --json)
+  plan_usage.py probe ID   one provider's normalized answer, without touching the cache
   plan_usage.py refresh    refresh now and print the bar line
   plan_usage.py snippet    the config.toml snippet for a fresh install
   plan_usage.py shim       (re)write the tab bar shim — runs on every herdr start
@@ -38,7 +39,7 @@ for _stream in (sys.stdout, sys.stderr):
 from planusage import cache, config, render, ui          # noqa: E402
 from planusage.providers import registry                 # noqa: E402
 
-COMMANDS = ("bar", "panel", "setup", "detect", "refresh", "snippet", "shim", "event", "open")
+COMMANDS = ("bar", "panel", "setup", "detect", "probe", "refresh", "snippet", "shim", "event", "open")
 
 
 def detected(settings, providers, data, as_json):
@@ -81,6 +82,14 @@ def main():
         ui.setup(settings, providers, demo)
     elif command == "detect":
         detected(settings, providers, cache.demo(providers) if demo else cache.load(), "--json" in argv)
+    elif command == "probe":
+        target = argv[1] if len(argv) > 1 else ""
+        provider = next((p for p in providers if p.id == target), None)
+        if provider is None:
+            sys.exit(f"unknown provider {target!r}; known: " + ", ".join(p.id for p in providers))
+        result = cache.attempt(provider)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        sys.exit(1 if result.get("error") else 0)
     elif command == "snippet":
         print(ui.snippet())
     elif command == "shim":
