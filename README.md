@@ -12,10 +12,9 @@ GPT 12/02 4h21m · OR $0.00/$1.00 6d15h · DS $6.43 · AGY 00% 6d23h
 
 `prefix+u` opens the popup: every window of every agent, a bar per window, the
 reset on your own clock, and a plain-language reason when something cannot be read.
+`s` in the popup opens the settings screen; `s` again goes back.
 
 ```
-  ↻ r                                                     Detail  Compact
-
   ⚠ 1 agent without a reading — see below
 
   Codex  Plus  you@example.com                                 4h21m   24%
@@ -33,6 +32,8 @@ reset on your own clock, and a plain-language reason when something cannot be re
 
   Antigravity  Free                                            6d23h    0%
     Weekly · Claude and GPT ━━━━━━━━━━━━━━━━━━━   0%  6d23h · Tue 15:20
+
+  updated 20s ago · s setup · r refresh · q close
 ```
 
 ## Install
@@ -88,7 +89,7 @@ all four meters without installing a separate CLI for each vendor.
 
 ## Setup pane
 
-`herdr plugin action invoke hhhai0304.plan-usage.setup`
+`s` inside the popup, or `herdr plugin action invoke hhhai0304.plan-usage.setup`.
 
 | Key | |
 |---|---|
@@ -98,6 +99,7 @@ all four meters without installing a separate CLI for each vendor.
 | `l` | edit its tab bar label (Enter keeps, Esc cancels, empty resets) |
 | `r` | refresh now |
 | `c` | copy the config snippet |
+| `s` | back to the usage screen (the standalone pane has no usage screen; `q` closes) |
 | `q` | close |
 
 Every change is written to `config.toml` in the plugin config directory

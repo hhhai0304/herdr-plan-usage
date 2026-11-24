@@ -386,24 +386,26 @@ class RenderTest(TempEnv):
     def test_panel_renders_every_width_without_error(self):
         now = 1_000_000
         for width in (60, 76, 120):
-            lines = render.panel_lines(self.providers(), self.states(now), now, "detail", False,
+            lines = render.panel_lines(self.providers(), self.states(now), now, False,
                                        width, config.load())
             plain = [render.ANSI.sub("", line) for line in lines]
             self.assertTrue(any("Codex" in line for line in plain))
             self.assertTrue(any("No active subscription" in line for line in plain))
             self.assertLessEqual(max(len(line) for line in plain), width + 2)
 
-    def test_panel_compact_hides_window_rows(self):
+    def test_panel_always_shows_every_window(self):
         now = 1_000_000
-        detail = render.panel_lines(self.providers(), self.states(now), now, "detail", False, 76, config.load())
-        compact = render.panel_lines(self.providers(), self.states(now), now, "compact", False, 76, config.load())
-        self.assertGreater(len(detail), len(compact))
+        lines = render.panel_lines(self.providers(), self.states(now), now, False, 76, config.load())
+        plain = [render.ANSI.sub("", line) for line in lines]
+        self.assertTrue(any("5h" in line for line in plain))
+        self.assertTrue(any("Weekly" in line for line in plain))
+        self.assertFalse(any("Compact" in line for line in plain))
 
     def test_hidden_absent_provider_is_not_rendered(self):
         provider = Provider("claude", "Claude Code", "Claude", "claude", "?",
                             lambda: {}, lambda: ("absent", "not installed"), "")
         data = {"claude": {"error": {"code": "nologin"}}}
-        lines = render.panel_lines([provider], data, time.time(), "detail", False, 76, config.load())
+        lines = render.panel_lines([provider], data, time.time(), False, 76, config.load())
         self.assertFalse(any("Claude" in render.ANSI.sub("", line) for line in lines))
 
     def test_setup_rows_report_detection_and_state(self):

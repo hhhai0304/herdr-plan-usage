@@ -223,14 +223,11 @@ def label_width(providers, data, now):
     return min(26, max(16, longest))
 
 
-def panel_lines(providers, data, now, mode, busy, screen_width, settings, demo=False):
+def panel_lines(providers, data, now, busy, screen_width, settings, demo=False):
     shown = ordered(providers, settings, demo)
     problems = open_problems(providers, data, settings, demo)
     label_w = label_width(shown, data, now)
-    segment = "".join(
-        "\x1b[48;2;41;46;66m" + bold(fg("fg", f" {name} ")) + "\x1b[49m" if name == mode
-        else fg("dim", f" {name} ") for name in ("Detail", "Compact"))
-    lines = [row(fg("dim", "\u21bb r"), segment, screen_width), ""]
+    lines = [""]
     if problems:
         noun = "agent" if len(problems) == 1 else "agents"
         lines += [fg("yellow", f"  \u26a0 {len(problems)} {noun} without a reading \u2014 see below"),
@@ -249,21 +246,19 @@ def panel_lines(providers, data, now, mode, busy, screen_width, settings, demo=F
             else:
                 value = bold(fg("fg", lead.get("amount") or ""))
             lines.append(row(title, reset + value, screen_width))
-            if mode == "detail":
-                lines += [window_row(w, now, screen_width, label_w) for w in wins]
+            lines += [window_row(w, now, screen_width, label_w) for w in wins]
         else:
             lines.append(row(title, fg("dim", "loading\u2026" if busy else "\u2013"), screen_width))
         err = error_of(state)
-        if err and (mode == "detail" or not wins):
+        if err:
             old = (fg("dim", " \u00b7 value from " + fmt_ago(state["fetched_at"], now))
                    if state.get("fetched_at") else "")
             lines.append("    " + fg("red", "\u26a0 " + error_text(err)) + old)
-        if mode == "detail":
-            lines.append("")
+        lines.append("")
     fetched = [data[p.id]["fetched_at"] for p in providers if (data.get(p.id) or {}).get("fetched_at")]
     status = ("refreshing\u2026" if busy
               else f"updated {fmt_ago(min(fetched), now)}" if fetched else "")
-    hint = "Tab view \u00b7 s setup \u00b7 r refresh \u00b7 q close"
+    hint = "s setup \u00b7 r refresh \u00b7 q close"
     lines.append("  " + fg("dim", " \u00b7 ".join(x for x in (status, hint) if x)))
     return lines
 

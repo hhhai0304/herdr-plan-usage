@@ -113,7 +113,7 @@ def size():
 # ── popup ────────────────────────────────────────────────────────────
 
 def panel(settings, providers, demo=False):
-    ui = {"mode": "detail", "screen": "usage", "cursor": 0, "note": ""}
+    ui = {"screen": "usage", "cursor": 0, "note": ""}
     refresher = Refresher(providers, settings)
     with Screen() as screen:
         if not demo:
@@ -130,8 +130,8 @@ def panel(settings, providers, demo=False):
                 ui["cursor"] = max(0, min(ui["cursor"], len(rows) - 1))
                 screen.draw(render.setup_lines(rows, ui["cursor"], ui["note"], size()))
             else:
-                screen.draw(render.panel_lines(providers, data, now, ui["mode"],
-                                               refresher.busy, size(), settings, demo))
+                screen.draw(render.panel_lines(providers, data, now, refresher.busy,
+                                               size(), settings, demo))
             ui["note"] = ""
             key = screen.key(0.5)
             if key in QUIT:
@@ -146,8 +146,6 @@ def panel(settings, providers, demo=False):
             elif key in (b"r", b"R"):
                 refresher.kick(cache.MANUAL_MIN_AGE)
                 last = time.time()
-            elif key in (b"\t", b"\x1b[Z", b"\x1b[C", b"\x1b[D"):
-                ui["mode"] = "compact" if ui["mode"] == "detail" else "detail"
 
 
 # ── setup ────────────────────────────────────────────────────────────

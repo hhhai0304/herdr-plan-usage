@@ -2,7 +2,7 @@
 """Plan Usage — every agent signed in on this machine, in the herdr tab bar.
 
   plan_usage.py bar        one line for herdr's ui.tab_bar_right (reads the cache)
-  plan_usage.py panel      the popup: Tab detail/compact · r refresh · q close
+  plan_usage.py panel      the popup: s settings · r refresh · q close
   plan_usage.py setup      toggle agents, edit labels, check what was detected
   plan_usage.py detect     what is on this machine right now (text or --json)
   plan_usage.py refresh    refresh now and print the bar line
