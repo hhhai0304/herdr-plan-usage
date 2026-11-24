@@ -379,7 +379,8 @@ def fetch_custom(command):
     `amount` replaces `used` for a money meter (kind `balance` / `spend`).
     """
     try:
-        proc = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=8)
+        proc = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=8,
+                              encoding="utf-8", errors="replace")
     except (OSError, subprocess.SubprocessError):
         raise FetchError("network")
     if proc.returncode != 0:

@@ -26,6 +26,15 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# herdr renders UTF-8 (box drawing, `·`, `—`). Windows console text streams still
+# default to the active code page, which turns every one of those into `?` or a
+# replacement character, so pin the output encoding instead of inheriting it.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 from planusage import cache, config, render, ui          # noqa: E402
 from planusage.providers import registry                 # noqa: E402
 
